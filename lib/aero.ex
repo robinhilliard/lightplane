@@ -420,4 +420,24 @@ defmodule Aero do
   end
   
   
+  @doc """
+  Coefficient of induced drag (Cdi, dimensionless) reflecting how wing planform effects
+  induced drag for given coefficient of lift (Cl), aspect ratio (AR)
+  and (optional, discredited by Riblett) wing efficiency factor e.
+  
+  See ELDH p5 [17]
+  
+  ## Examples
+  ```
+  iex> Aero.cdi 1.1, 5
+  0.07703099245647736
+  iex> Aero.cdi 1.1, 5, Aero.e(:straight)
+  0.09062469700762041
+  ```
+  """
+  @spec cdi(number, number) :: number
+  @spec cdi(number, number, number) :: number
+  def cdi(cl, ar, e \\ @e_elliptical), do: :math.pow(cl, 2) / (:math.pi() * e * ar)
+  
+  
 end
