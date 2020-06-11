@@ -340,7 +340,8 @@ defmodule Aero do
   0.005
   ```
   """
-  @spec cf(:super_clean_sailplance | :clean_q2_dragonfly | :enclosed_basic_trainer_mono | :open_stearman_biplane_exp_radial) :: number
+  @type cf_example_ac :: :super_clean_sailplance | :clean_q2_dragonfly | :enclosed_basic_trainer_mono | :open_stearman_biplane_exp_radial
+  @spec cf(cf_example_ac) :: number
   def cf(:super_clean_sailplane), do: @cf_super_clean_sailplane
   def cf(:clean_q2_dragonfly), do: @cf_clean_q2_dragonfly
   def cf(:enclosed_basic_trainer_mono), do: @cf_enclosed_basic_trainer_mono
@@ -350,9 +351,10 @@ defmodule Aero do
   @doc """
   Wing efficiency factor (e, dimensionless). Note that Riblett thinks the NACA
   experiment this was based on is crap because it tapered thickness ratios along
-  with aspect ratio down to inefficient values around 9%.
+  with aspect ratio down to inefficient values around 9%, and the elliptical wing
+  was the only one with no thickness taper and a high lift 4412 section.
   
-  See ELDH p5, GA Airfoils (H Riblett) p99
+  See ELDH p5, GA Airfoils (H Riblett) p99-100
   
   ## Examples
   ```
@@ -360,10 +362,62 @@ defmodule Aero do
   0.85
   ```
   """
-  @spec e(:straight | :tapered | :elliptical) :: number
+  @type e_wing_planform :: :straight | :tapered | :elliptical
+  @spec e(e_wing_planform) :: number
   def e(:straight), do: @e_straight
   def e(:tapered), do: @e_tapered
   def e(:elliptical), do: @e_elliptical
+  
+  
+  @doc """
+  D/q pre-calculated coefficient of friction (Cf) * wetted surface (Sw)
+  for some representative aircraft types.
+  
+  See ELDH p5
+  
+  ## Examples
+  ```
+  iex> Aero.dq :cherokee_180
+  3.9
+  ```
+  """
+  @type dq_example_ac :: :ercoupe | :cherokee_180 | :varieze | :lancair_200 | :q2 | :dragonfly
+  @spec dq(dq_example_ac) :: number
+  def dq(:ercoupe), do: @dq_ercoupe
+  def dq(:cherokee_180), do: @dq_cherokee_180
+  def dq(:varieze), do: @dq_varieze
+  def dq(:lancair_200), do: @dq_lancair_200
+  def dq(:q2), do: @dq_q2
+  def dq(:dragonfly), do: @dq_dragonfly
+  
+  
+  @doc """
+  Parasite drag (Dp) based on either:
+  - coefficient of friction (cf), wetted surface area (Sw) and q
+  - D/q and q
+  
+  See ELDH p5 [15-16]
+  
+  ## Examples
+  ```
+  iex> Aero.dp Aero.cf(:enclosed_basic_trainer_mono), {433, :ft2}, {20, :psf}
+  {77.94, :lbf}
+  iex> Aero.dp Aero.dq(:cherokee_180), {20, :psf}
+  {78.0, :lbf}
+  ```
+  """
+  @spec dp(number, {number, Unit.area_unit}, {number, Unit.pressure_unit}) :: {number, :lbf}
+  @spec dp(number, {number, Unit.pressure_unit}) :: {number, :lbf}
+  def dp(cf, sw, q) when is_number(cf) do
+    {sw_ft2, :ft2} = sw ~> :ft2
+    {q_psf, :psf} = q ~> :psf
+    {cf * sw_ft2 * q_psf, :lbf}
+  end
+  
+  def dp(dq, q) when is_number(dq) do
+    {q_psf, :psf} = q ~> :psf
+    {dq * q_psf, :lbf}
+  end
   
   
 end
