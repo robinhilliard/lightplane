@@ -61,6 +61,8 @@ defmodule Unit do
     psf:    {:pressure, 47.88, "pounds per square foot"}
   }
   
+  @type dimension :: :mass | :volume | :density | :area | :length | :force | :pressure | :velocity | :time | :acceleration | :moment
+  
   @dimensions [
     {:mass, :volume, :density},
     {:volume, :area, :length},
@@ -81,6 +83,7 @@ defmodule Unit do
   iex>10 <~ :kph
   {10, :kph}
   """
+  @spec number <~ unit :: {number, unit}
   def a <~ b when is_number(a) and is_atom(b), do: {a, b}
   
   
@@ -92,9 +95,25 @@ defmodule Unit do
   iex>dimension_of {10, :kph}
   :velocity
   """
+  @spec dimension_of({number, unit}) :: dimension
   def dimension_of({value, unit}) when is_number(value) and is_atom(unit) do
     with {dimension, _, _} <- @units[unit] do
       dimension
+    end
+  end
+  
+  @doc """
+  Human readable description of a unit
+  
+  ## Examples
+  iex>use Unit
+  iex>describe {10, :kph}
+  "kilometres per hour"
+  """
+  @spec describe({number, unit}) :: String.t
+  def describe({value, unit}) when is_number(value) and is_atom(unit) do
+    with {_, _, description} <- @units[unit] do
+      description
     end
   end
   
@@ -144,6 +163,7 @@ defmodule Unit do
   iex> 10 <~ :ms ~> :kph
   {36.0, :kph}
   """
+  @spec {number, unit} ~> unit :: {number, unit}
   def a ~> b when is_tuple(a) and is_atom(b), do: to(a, b)
   
   @doc """
@@ -158,6 +178,7 @@ defmodule Unit do
     iex> {1, :in} + {1, :ft}
     {13.0, :in}
   """
+  
   def a + b when is_number(a) and is_number(b), do: Kernel.+(a, b)  # original
   def {a, unit} + {b, unit} when is_number(a) and is_number(b) and is_atom(unit), do: {Kernel.+(a, b), unit}  # same unit
   def {value_a, unit_of_a} + {value_b, unit_of_b} when is_number(value_a) and is_number(value_b) and is_atom(unit_of_a) and is_atom(unit_of_b) do
