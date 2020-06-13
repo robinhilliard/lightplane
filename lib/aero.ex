@@ -149,13 +149,7 @@ defmodule Aero do
   @spec s({number, Unit.mass_unit}, {number, Unit.pressure_unit | Unit.velocity_unit}, number) :: {number, :ft2}
   def s(gross_weight, dynamic_pressure_or_velocity, cl_max) when is_number(cl_max) do
     {gross_weight_lbs, :lbs} = gross_weight ~> :lbs
-    
-    {dynamic_pressure_psf, :psf} = if dimension_of(dynamic_pressure_or_velocity) == :velocity do
-      q(dynamic_pressure_or_velocity) # assume sea level
-    else
-      dynamic_pressure_or_velocity ~> :psf
-    end
-  
+    {dynamic_pressure_psf, :psf} = dp_or_v_to_psf(dynamic_pressure_or_velocity)
     {gross_weight_lbs / (dynamic_pressure_psf * cl_max), :ft2}
   end
   
@@ -180,13 +174,7 @@ defmodule Aero do
   def cl(gross_weight, dynamic_pressure_or_velocity, wing_area) do
     {gross_weight_lbs, :lbs} = gross_weight ~> :lbs
     {wing_area_ft2, :ft2} = wing_area ~> :ft2
-    
-    {dynamic_pressure_psf, :psf} = if dimension_of(dynamic_pressure_or_velocity) == :velocity do
-      q(dynamic_pressure_or_velocity) # assume sea level
-    else
-      dynamic_pressure_or_velocity ~> :psf
-    end
-  
+    {dynamic_pressure_psf, :psf} = dp_or_v_to_psf(dynamic_pressure_or_velocity)
     gross_weight_lbs / (dynamic_pressure_psf * wing_area_ft2)
   end
   
@@ -207,13 +195,7 @@ defmodule Aero do
   @spec l(number, {number, Unit.area_unit}, {number, Unit.pressure_unit | Unit.velocity_unit}) :: {number, :lbf}
   def l(cl, wing_area, dynamic_pressure_or_velocity) when is_number(cl) do
     {wing_area_ft2, :ft2} = wing_area ~> :ft2
-    
-    {dynamic_pressure_psf, :psf} = if dimension_of(dynamic_pressure_or_velocity) == :velocity do
-      q(dynamic_pressure_or_velocity) # assume sea level
-    else
-      dynamic_pressure_or_velocity ~> :psf
-    end
-  
+    {dynamic_pressure_psf, :psf} = dp_or_v_to_psf(dynamic_pressure_or_velocity)
     {cl * wing_area_ft2 * dynamic_pressure_psf, :lbf}
   end
   
@@ -460,14 +442,18 @@ defmodule Aero do
   @spec di(number, {number, Unit.area_unit}, {number, Unit.pressure_unit | Unit.velocity_unit}) :: {number, :lbf}
   def di(cdi, wing_area, dynamic_pressure_or_velocity) when is_number(cdi) do
     {wing_area_ft2, :ft2} = wing_area ~> :ft2
-    
-    {dynamic_pressure_psf, :psf} = if dimension_of(dynamic_pressure_or_velocity) == :velocity do
+    {dynamic_pressure_psf, :psf} = dp_or_v_to_psf(dynamic_pressure_or_velocity)
+    {cdi * wing_area_ft2 * dynamic_pressure_psf, :lbf}
+  end
+  
+  
+  # Helper for functions taking dynamic pressure or velocity argument
+  defp dp_or_v_to_psf(dynamic_pressure_or_velocity) do
+    if dimension_of(dynamic_pressure_or_velocity) == :velocity do
       q(dynamic_pressure_or_velocity) # assume sea level
     else
       dynamic_pressure_or_velocity ~> :psf
     end
-  
-    {cdi * wing_area_ft2 * dynamic_pressure_psf, :lbf}
   end
   
   
