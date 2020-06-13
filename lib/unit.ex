@@ -13,18 +13,21 @@ defmodule Unit do
   end
   
   @type area_unit :: :m2 | :ft2 | :in2
+  @type energy_unit :: :w | :kw | :hp
   @type length_unit :: :m | :cm | :mm | :ft | :in
   @type mass_unit :: :kg | :g | :lbs | :slug
+  @type power_unit :: :w | :kw | :hp
   @type pressure_unit :: :pa | :kpa | :psi | :psf
   @type time_unit :: :s | :min | :hrs
   @type velocity_unit :: :ms | :mph | :knots | :kph
-  @type unit :: mass_unit | length_unit | time_unit | velocity_unit | area_unit | pressure_unit
+  @type unit :: area_unit | energy_unit | length_unit | mass_unit | power_unit | pressure_unit | time_unit | velocity_unit
   
   @units %{
     kg:     {:mass,     1.0, "kilograms"},
     g:      {:mass,     0.001, "grams"},
     lbs:    {:mass,     0.45359237, "pounds"},
     slug:   {:mass,     Kernel.*(32.174049, 0.45359237), "slugs"},
+    oz:     {:mass,    0.02835, "ounces"},
 
     m:      {:length,   1.0, "metres"},
     cm:     {:length,   0.01, "centimetres"},
@@ -58,22 +61,36 @@ defmodule Unit do
     lbf:    {:force,  4.448222, "pound force"},
     
     pa:     {:pressure, 1.0, "pascals"},  # N/m2
-    kpa:    {:pressure, 0.001, "kilopascals"},
+    kpa:    {:pressure, 1_000, "kilopascals"},
     psi:    {:pressure, 6_895, "pounds per square inch"},
-    psf:    {:pressure, 47.88, "pounds per square foot"}
+    psf:    {:pressure, 47.8803, "pounds per square foot"},
+    inhg:   {:pressure, 3_390, "inches of mercury"},
+    
+    w:      {:power,    1.0, "watts"},
+    kw:     {:power,    1_000, "kilowatts"},
+    hp:     {:power,    746, "horsepower"},
+  
+    c:      {:temperature, 1.0, "degrees centigrade"},
+    f:      {:temperature, {&Util.f_to_c/1, &Util.c_to_f/1}, "degrees fahrenheit"}
   }
   
-  @type dimension :: :mass | :volume | :density | :area | :length | :force | :pressure | :velocity | :time | :acceleration | :moment
+  
+  @type dimension ::
+          :acceleration | :area | :density | :energy | :force | :length | :mass |
+          :moment | :power | :pressure | :velocity | :volume | :temperature | :time
   
   @dimensions [
-    {:mass, :volume, :density},
-    {:volume, :area, :length},
-    {:force, :pressure, :area},
     {:area, :length, :length},
-    {:length, :velocity, :time},
-    {:velocity, :acceleration, :time},
+    {:energy, :force, :length},
+    {:energy, :power, :time},
     {:force, :mass, :acceleration},
-    {:moment, :length, :force}
+    {:force, :pressure, :area},
+    {:length, :velocity, :time},
+    {:mass, :volume, :density},
+    {:moment, :length, :force},
+    {:power, :force, :velocity},
+    {:velocity, :acceleration, :time},
+    {:volume, :area, :length}
   ]
   
   @doc """
@@ -139,6 +156,10 @@ defmodule Unit do
   {19.6078431372549, :knots}
   iex> Unit.to {10, :ms}, :kph
   {36.0, :kph}
+  iex> Unit.to {50, :f}, :c
+  {10.0, :c}
+  iex> Unit.to {10, :c}, :f
+  {50.0, :f}
   iex> Unit.to {10, :ms}, :feet
   {:error, "Unknown destination unit 'feet'."}
   iex> Unit.to {10, :mps}, :ft
@@ -152,7 +173,20 @@ defmodule Unit do
     with {:from, {from_dim, c_from, _}} <- {:from, @units[from_unit]},
          {:to, {to_dim, c_to, _}} <- {:to, @units[to_unit]},
          {:dims_match, true} <- {:dims_match, from_dim == to_dim} do
-      {Float.round(input * (c_from / c_to), 14), to_unit}
+      interim = if is_number(c_from) do
+        input * c_from
+      else
+        {convert, _} = c_from
+        convert.(input)
+      end
+      output = if is_number(c_to) do
+        interim / c_to
+      else
+        {_, convert} = c_to
+        convert.(interim)
+      end |> Float.round(14)
+      {output, to_unit}
+      
     else
       {:from, nil} -> {:error, "Unknown source unit '#{Atom.to_string(from_unit)}'."}
       {:to, nil} -> {:error, "Unknown destination unit '#{Atom.to_string(to_unit)}'."}
