@@ -336,7 +336,7 @@ defmodule Aero do
   0.005
   ```
   """
-  @typedoc "`Cf` sample aircraft"
+  @typedoc "`Cf` sample aircraft option"
   @type cf_example_ac :: :super_clean_sailplance | :clean_q2_dragonfly | :enclosed_basic_trainer_mono | :open_stearman_biplane_exp_radial
   @spec cf(cf_example_ac) :: number
   def cf(cf_example_ac)
@@ -360,7 +360,7 @@ defmodule Aero do
   0.85
   ```
   """
-  @typedoc "`e` wing planform"
+  @typedoc "`e` wing planform option"
   @type e_wing_planform :: :straight | :tapered | :elliptical
   @spec e(e_wing_planform) :: number
   def e(e_wing_planform)
@@ -381,7 +381,7 @@ defmodule Aero do
   3.9
   ```
   """
-  @typedoc "`D/q` sample aircraft"
+  @typedoc "`D/q` sample aircraft option"
   @type dq_example_ac :: :ercoupe | :cherokee_180 | :varieze | :lancair_200 | :q2 | :dragonfly
   @spec dq(dq_example_ac) :: number
   def dq(dq_example_ac)
