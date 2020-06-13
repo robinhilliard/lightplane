@@ -19,7 +19,7 @@ defmodule Unit do
   @type power_unit :: :w | :kw | :hp
   @type pressure_unit :: :pa | :kpa | :psi | :psf
   @type time_unit :: :s | :min | :hrs
-  @type velocity_unit :: :ms | :mph | :knots | :kph
+  @type velocity_unit :: :ms | :mph | :knots | :kph | :fpm
   @type unit :: area_unit | energy_unit | length_unit | mass_unit | power_unit | pressure_unit | time_unit | velocity_unit
   
   @units %{
@@ -53,6 +53,7 @@ defmodule Unit do
     mph:    {:velocity, 0.45, "miles per hour"},
     knots:  {:velocity, 0.51, "knots"},
     kph:    {:velocity, Kernel./(1, 3.6), "kilometres per hour"},
+    fpm:    {:velocity, 0.00508, "feet per minute"},
   
     ms2:    {:acceleration, 1.0, "metres per second squared"},
     fts2:   {:acceleration, 0.3048, "feet per second squared"},
