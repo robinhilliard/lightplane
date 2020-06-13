@@ -108,14 +108,14 @@ defmodule Aero do
   
   ## Examples
   ```
-  iex> Aero.estimate_gross_weight 1, {170, :kg}
+  iex> Aero.w 1, {170, :kg}
   {485.7142857142857, :kg}
   ```
   """
-  @spec estimate_gross_weight(1 | 2, number) :: {number, Unit.mass_unit}
-  def estimate_gross_weight(w, payload)
-  def estimate_gross_weight(1, payload), do: payload / @est_gross_wt_1_place_coefficient
-  def estimate_gross_weight(2, payload), do: payload / @est_gross_wt_2_place_coefficient
+  @spec w(1 | 2, number) :: {number, Unit.mass_unit}
+  def w(number_of_seats, payload)
+  def w(1, payload), do: payload / @est_gross_wt_1_place_coefficient
+  def w(2, payload), do: payload / @est_gross_wt_2_place_coefficient
 
   @doc """
   Calculate Reynolds Number `RN` (dimensionless) based on chord `C` and velocity `V`
@@ -143,15 +143,15 @@ defmodule Aero do
   
   ## Examples
   ```
-  iex> Aero.cl_max_approx :fabric
+  iex> Aero.cl_max :fabric
   1.2
   ```
   """
-  @spec cl_max_approx(:fabric | :metal | :composite) :: float
-  def cl_max_approx(wing_surface_material)
-  def cl_max_approx(:fabric), do: @cl_max_approx_fabric
-  def cl_max_approx(:metal), do: @cl_max_approx_metal
-  def cl_max_approx(:composite), do: @cl_max_approx_composite
+  @spec cl_max(:fabric | :metal | :composite) :: float
+  def cl_max(wing_surface_material)
+  def cl_max(:fabric), do: @cl_max_approx_fabric
+  def cl_max(:metal), do: @cl_max_approx_metal
+  def cl_max(:composite), do: @cl_max_approx_composite
   
   
   @doc """
@@ -161,7 +161,7 @@ defmodule Aero do
   
   ## Examples
   ```
-  iex> Aero.vs({120, :kg}, {31, :m2}, Aero.cl_max_approx(:fabric))
+  iex> Aero.vs({120, :kg}, {31, :m2}, Aero.cl_max(:fabric))
   {16.25961068607986, :mph}
   ```
   """
@@ -180,11 +180,11 @@ defmodule Aero do
   
   ## Examples
   ```
-  iex> Aero.s {120, :kg}, Aero.q({16, :mph}), Aero.cl_max_approx(:fabric)
+  iex> Aero.s {120, :kg}, Aero.q({16, :mph}), Aero.cl_max(:fabric)
   {336.3987154920617, :ft2}
-  iex> Aero.s {120, :kg}, {16, :mph}, Aero.cl_max_approx(:fabric)
+  iex> Aero.s {120, :kg}, {16, :mph}, Aero.cl_max(:fabric)
   {336.3987154920617, :ft2}
-  iex> Aero.s {120, :kg}, Aero.q({16, :mph}, {2_000, :ft}), Aero.cl_max_approx(:fabric)
+  iex> Aero.s {120, :kg}, Aero.q({16, :mph}, {2_000, :ft}), Aero.cl_max(:fabric)
   {356.3545714958281, :ft2}
   ```
   """
