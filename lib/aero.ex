@@ -1,6 +1,18 @@
 defmodule Aero do
   @moduledoc """
   Formulae from Chapter 1 of the Evans Light Plane Designer's Handbook (ELDH).
+  Function names and arguments are documented in mixed case to match standard
+  subscripted symbols used in engineering books for readability:
+
+  <table>
+    <tr><th>Symbol Name</th><th>Documentation</th><th>Code</th></tr>
+    <tr><td>Reynolds Number</td><td><code class="inline">RN</code></td><td><code class="inline">rn</code></td></tr>
+    <tr><td>coefficient of induced drag</td><td><code class="inline">Cdi</code></td><td><code class="inline">cdi</code></td></tr>
+    <tr><td>max coefficient of lift</td><td><code class="inline">Cl max</code></td><td><code class="inline">cl_max</code></td></tr>
+    <tr><td>wing area</td><td><code class="inline">S</code></td><td><code class="inline">s</code></td></tr>
+    <tr><td>span</td><td><code class="inline">b</code></td><td><code class="inline">b</code></td></tr>
+    <tr><td>drag per Q</td><td><code class="inline">D/q</code></td><td><code class="inline">dq</code></td></tr>
+  </table>
   """
   
   
@@ -24,7 +36,7 @@ defmodule Aero do
   
   
   @doc """
-  Given a velocity and optional altitude in a standard atmosphere, determine dynamic pressure
+  Given a velocity `V` and optional altitude in a standard atmosphere, determine dynamic pressure `Q`
   in pounds per square foot (unit implied by eq [5] on page 4 of ELDH).
   
   See ELDH p3, p4 [1]
@@ -38,13 +50,13 @@ defmodule Aero do
   ```
   """
   @spec q({number, Unit.velocity_unit}, {number, Unit.length_unit}) :: {number, :psf}
-  def q(velocity, altitude \\ {@sea_level, :ft}) do
-    {velocity_mph, :mph} = velocity ~> :mph
+  def q(v, altitude \\ {@sea_level, :ft}) do
+    {v_mph, :mph} = v ~> :mph
     {altitude_ft, :ft} = altitude ~> :ft
     {
       @q_velocity_coefficient
-      * velocity_mph
-      * velocity_mph
+      * v_mph
+      * v_mph
       * Util.interpolate(
           altitude_ft,
          [
@@ -61,7 +73,7 @@ defmodule Aero do
   
   
   @doc """
-  Estimate gross weight of aircraft based on number of seats and
+  Estimate gross weight `W` of aircraft based on number of seats and
   payload (people + baggage + fuel).
   
   See ELDH p4 [2]
@@ -73,30 +85,31 @@ defmodule Aero do
   ```
   """
   @spec estimate_gross_weight(1 | 2, number) :: {number, Unit.mass_unit}
+  def estimate_gross_weight(w, payload)
   def estimate_gross_weight(1, payload), do: payload / @est_gross_wt_1_place_coefficient
   def estimate_gross_weight(2, payload), do: payload / @est_gross_wt_2_place_coefficient
 
   @doc """
-  Calculate Reynolds Number (dimensionless).
+  Calculate Reynolds Number `RN` (dimensionless) based on chord `C` and velocity `V`
   
   See ELDH p4 [3]
   
   ## Examples
   ```
-  iex>Aero.reynolds_number {48, :in}, {33, :knots}
-  1_396_665.5999999999
+  iex>Aero.rn {48, :in}, {33, :knots}
+  1396665.5999999999
   ```
   """
-  @spec reynolds_number({number, Unit.length_unit}, {number, Unit.velocity_unit}) :: number
-  def reynolds_number(chord, velocity) do
-    {chord_in, :in} = chord ~> :in
-    {velocity_mph, :mph} = velocity ~> :mph
-    @reynolds_number_coefficient * chord_in * velocity_mph
+  @spec rn({number, Unit.length_unit}, {number, Unit.velocity_unit}) :: number
+  def rn(c, v) do
+    {c_in, :in} = c ~> :in
+    {v_mph, :mph} = v ~> :mph
+    @reynolds_number_coefficient * c_in * v_mph
   end
   
   
   @doc """
-  Approximate Cl max for different wing surface materials.
+  Approximate `Cl max` for different wing surface materials.
   
   See ELDH p4
   
@@ -107,13 +120,14 @@ defmodule Aero do
   ```
   """
   @spec cl_max_approx(:fabric | :metal | :composite) :: number
+  def cl_max_approx(wing_surface_material)
   def cl_max_approx(:fabric), do: @cl_max_approx_fabric
   def cl_max_approx(:metal), do: @cl_max_approx_metal
   def cl_max_approx(:composite), do: @cl_max_approx_composite
   
   
   @doc """
-  Stall speed based on wing loading and Cl max.
+  Stall speed based on gross weight `W`, wing area `S` and `Cl max`.
   
   See ELDH p4 [4]
   
@@ -124,15 +138,15 @@ defmodule Aero do
   ```
   """
   @spec vs({number, Unit.mass_unit}, {number, Unit.area_unit}, number) :: {number, :mph}
-  def vs(gross_weight, wing_area, cl_max) when is_number(cl_max) do
-    {gross_weight_lbs, :lbs} = gross_weight ~> :lbs
-    {wing_area_ft2, :ft2} = wing_area ~> :ft2
-    {@vs_coefficient * :math.sqrt((gross_weight_lbs / wing_area_ft2) / cl_max), :mph}
+  def vs(w, s, cl_max) when is_number(cl_max) do
+    {w_lbs, :lbs} = w ~> :lbs
+    {s_ft2, :ft2} = s ~> :ft2
+    {@vs_coefficient * :math.sqrt((w_lbs / s_ft2) / cl_max), :mph}
   end
   
   
   @doc """
-  Wing area (S) required for given weight, dynamic pressure or velocity and Cl max.
+  Wing area `S` required for given weight, dynamic pressure `q` or velocity `V` and `Cl max`.
   
   See ELDH p4 [5]
   
@@ -147,16 +161,16 @@ defmodule Aero do
   ```
   """
   @spec s({number, Unit.mass_unit}, {number, Unit.pressure_unit | Unit.velocity_unit}, number) :: {number, :ft2}
-  def s(gross_weight, dynamic_pressure_or_velocity, cl_max) when is_number(cl_max) do
-    {gross_weight_lbs, :lbs} = gross_weight ~> :lbs
-    {dynamic_pressure_psf, :psf} = dp_or_v_to_psf(dynamic_pressure_or_velocity)
-    {gross_weight_lbs / (dynamic_pressure_psf * cl_max), :ft2}
+  def s(w, q_or_v, cl_max) when is_number(cl_max) do
+    {w_lbs, :lbs} = w ~> :lbs
+    {q_psf, :psf} = q_or_v_to_psf(q_or_v)
+    {w_lbs / (q_psf * cl_max), :ft2}
   end
   
   
   @doc """
-  Coefficient of lift (Cl, dimensionless) required for given weight,
-  dynamic pressure or velocity and wing area.
+  Coefficient of lift `Cl` (dimensionless) required for given weight `W`,
+  dynamic pressure `Q` or velocity `V` and wing area `S`.
   
   See ELDH p4 [7]
   
@@ -171,16 +185,16 @@ defmodule Aero do
   ```
   """
   @spec cl({number, Unit.mass_unit}, {number, Unit.pressure_unit | Unit.velocity_unit}, {number, Unit.area_unit}) :: number
-  def cl(gross_weight, dynamic_pressure_or_velocity, wing_area) do
-    {gross_weight_lbs, :lbs} = gross_weight ~> :lbs
-    {wing_area_ft2, :ft2} = wing_area ~> :ft2
-    {dynamic_pressure_psf, :psf} = dp_or_v_to_psf(dynamic_pressure_or_velocity)
-    gross_weight_lbs / (dynamic_pressure_psf * wing_area_ft2)
+  def cl(w, q_or_v, s) do
+    {w_lbs, :lbs} = w ~> :lbs
+    {s_ft2, :ft2} = s ~> :ft2
+    {q_psf, :psf} = q_or_v_to_psf(q_or_v)
+    w_lbs / (q_psf * s_ft2)
   end
   
   
   @doc """
-  Lift (L) force generated by given Cl, S and dynamic pressure or velocity.
+  Lift `L` force generated by given `Cl`, wing area `S` and dynamic pressure `q` or velocity `V`.
   
   See ELDH p4 [9]
   
@@ -193,15 +207,15 @@ defmodule Aero do
   ```
   """
   @spec l(number, {number, Unit.area_unit}, {number, Unit.pressure_unit | Unit.velocity_unit}) :: {number, :lbf}
-  def l(cl, wing_area, dynamic_pressure_or_velocity) when is_number(cl) do
-    {wing_area_ft2, :ft2} = wing_area ~> :ft2
-    {dynamic_pressure_psf, :psf} = dp_or_v_to_psf(dynamic_pressure_or_velocity)
-    {cl * wing_area_ft2 * dynamic_pressure_psf, :lbf}
+  def l(cl, s, q_or_v) when is_number(cl) do
+    {s_ft2, :ft2} = s ~> :ft2
+    {q_psf, :psf} = q_or_v_to_psf(q_or_v)
+    {cl * s_ft2 * q_psf, :lbf}
   end
   
   
   @doc """
-  Span (b) of wing given wing area (S) and chord (C).
+  Span `b` of wing given wing area `S` and chord `C`.
   
   See ELDH p4 [11]
   
@@ -212,15 +226,15 @@ defmodule Aero do
   ```
   """
   @spec b({number, Unit.area_unit}, {number, Unit.length_unit}) :: {number, :ft}
-  def b(wing_area, chord) do
-    {wing_area_ft2, :ft2} = wing_area ~> :ft2
-    {chord_ft, :ft} = chord ~> :ft
-    {wing_area_ft2 / chord_ft, :ft}
+  def b(s, c) do
+    {s_ft2, :ft2} = s ~> :ft2
+    {c_ft, :ft} = c ~> :ft
+    {s_ft2 / c_ft, :ft}
   end
   
   
   @doc """
-  Chord (c) of wing given wing area (S) and span (b).
+  Chord `C` of wing given wing area `S` and span `b`.
   
   See ELDH p4 [12]
   
@@ -231,15 +245,15 @@ defmodule Aero do
   ```
   """
   @spec c({number, Unit.area_unit}, {number, Unit.length_unit}) :: {number, :ft}
-  def c(wing_area, span) do
-    {wing_area_ft2, :ft2} = wing_area ~> :ft2
-    {span_ft, :ft} = span ~> :ft
-    {wing_area_ft2 / span_ft, :ft}
+  def c(s, b) do
+    {s_ft2, :ft2} = s ~> :ft2
+    {b_ft, :ft} = b ~> :ft
+    {s_ft2 / b_ft, :ft}
   end
   
   
   @doc """
-  Wing loading given gross weight (W) and wing area (S).
+  Wing loading given gross weight `W` and wing area `S`.
   
   See ELDH p4 [13]
   
@@ -250,15 +264,15 @@ defmodule Aero do
   ```
   """
   @spec ws({number, Unit.mass_unit}, {number, Unit.area_unit}) :: {number, :psf}
-  def ws(gross_weight, wing_area) do
-    {gross_weight_lbs, :lbs} = gross_weight ~> :lbs
-    {wing_area_ft2, :ft2} = wing_area ~> :ft2
-    {gross_weight_lbs / wing_area_ft2, :psf}
+  def ws(w, s) do
+    {w_lbs, :lbs} = w ~> :lbs
+    {s_ft2, :ft2} = s ~> :ft2
+    {w_lbs / s_ft2, :psf}
   end
   
   
   @doc """
-  Aspect ratio (AR, dimensionless) given span (b) and chord (c) or wing area (S).
+  Aspect ratio `AR` (dimensionless) given span `b` and chord `C` or wing area `S`.
   
   See ELDH p4 [14]
   
@@ -271,16 +285,16 @@ defmodule Aero do
   ```
   """
   @spec ar({number, Unit.length_unit}, {number, Unit.length_unit | Unit.area_unit}) :: number
-  def ar(wing_span, chord_or_wing_area)  do
-    {wing_span_ft, :ft} = wing_span ~> :ft
+  def ar(b, c_or_s)  do
+    {b_ft, :ft} = b ~> :ft
     
-    if dimension_of(chord_or_wing_area) == :length do
-      {chord_ft, :ft} = chord_or_wing_area ~> :ft
-      wing_span_ft / chord_ft
+    if dimension_of(c_or_s) == :length do
+      {c_ft, :ft} = c_or_s ~> :ft
+      b_ft / c_ft
       
     else
-      {wing_area_ft2, :ft2} = chord_or_wing_area ~> :ft2
-      :math.pow(wing_span_ft, 2) / wing_area_ft2
+      {s_ft2, :ft2} = c_or_s ~> :ft2
+      :math.pow(b_ft, 2) / s_ft2
     end
     
   end
@@ -312,7 +326,7 @@ defmodule Aero do
   
   
   @doc """
-  Coefficient of friction (Cf) for wetted surface area parasite drag
+  Coefficient of friction `Cf` for wetted surface area parasite drag
   
   See ELDH p5
   
@@ -322,8 +336,10 @@ defmodule Aero do
   0.005
   ```
   """
+  @typedoc "`Cf` sample aircraft"
   @type cf_example_ac :: :super_clean_sailplance | :clean_q2_dragonfly | :enclosed_basic_trainer_mono | :open_stearman_biplane_exp_radial
   @spec cf(cf_example_ac) :: number
+  def cf(cf_example_ac)
   def cf(:super_clean_sailplane), do: @cf_super_clean_sailplane
   def cf(:clean_q2_dragonfly), do: @cf_clean_q2_dragonfly
   def cf(:enclosed_basic_trainer_mono), do: @cf_enclosed_basic_trainer_mono
@@ -331,7 +347,7 @@ defmodule Aero do
   
   
   @doc """
-  Wing efficiency factor (e, dimensionless). Note that Riblett thinks the NACA
+  Wing efficiency factor `e` (dimensionless). Note that Riblett thinks the NACA
   experiment this was based on is crap because it tapered thickness ratios along
   with aspect ratio down to inefficient values around 9%, and the elliptical wing
   was the only one with no thickness taper and a high lift 4412 section.
@@ -344,15 +360,17 @@ defmodule Aero do
   0.85
   ```
   """
+  @typedoc "`e` wing planform"
   @type e_wing_planform :: :straight | :tapered | :elliptical
   @spec e(e_wing_planform) :: number
+  def e(e_wing_planform)
   def e(:straight), do: @e_straight
   def e(:tapered), do: @e_tapered
   def e(:elliptical), do: @e_elliptical
   
   
   @doc """
-  D/q pre-calculated coefficient of friction (Cf) * wetted surface (Sw)
+  `D/q` pre-calculated coefficient of friction `Cf` * wetted surface `Sw`
   for some representative aircraft types.
   
   See ELDH p5
@@ -363,8 +381,10 @@ defmodule Aero do
   3.9
   ```
   """
+  @typedoc "`D/q` sample aircraft"
   @type dq_example_ac :: :ercoupe | :cherokee_180 | :varieze | :lancair_200 | :q2 | :dragonfly
   @spec dq(dq_example_ac) :: number
+  def dq(dq_example_ac)
   def dq(:ercoupe), do: @dq_ercoupe
   def dq(:cherokee_180), do: @dq_cherokee_180
   def dq(:varieze), do: @dq_varieze
@@ -374,11 +394,11 @@ defmodule Aero do
   
   
   @doc """
-  Parasite drag (Dp) based on either:
-  - coefficient of friction (cf), wetted surface area (Sw) and q
-  - D/q and q
+  Parasite drag `Dp` based on either:
+  - coefficient of friction `Cf`, wetted surface area `Sw` and dynamic pressure `Q`
+  - Sample aircraft drag per Q `D/q` and dynamic pressure`Q`
   
-  Total drag is Dp + Di
+  Total drag is `Dp + Di`
   
   See ELDH p5 [15-16, 19]
   
@@ -405,9 +425,9 @@ defmodule Aero do
   
   
   @doc """
-  Coefficient of induced drag (Cdi, dimensionless) reflecting how wing planform effects
-  induced drag for given coefficient of lift (Cl), aspect ratio (AR)
-  and (optional, discredited by Riblett) wing efficiency factor e.
+  Coefficient of induced drag `Cdi` (dimensionless) reflecting how wing planform effects
+  induced drag for given coefficient of lift `Cl`, aspect ratio `AR`
+  and (optional, discredited by Riblett) wing efficiency factor `e`.
   
   See ELDH p5 [17]
   
@@ -425,9 +445,9 @@ defmodule Aero do
   
   
   @doc """
-  Induced drag (Di) based on Cdi, wing area (S) and q or velocity
+  Induced drag `Di` based on `Cdi`, wing area `S` and dynamic pressure `Q` or velocity `V`
   
-  Total drag is Dp + Di.
+  Total drag is `Dp + Di`.
   
   See ELDH p5 [18, 19]
   
@@ -440,19 +460,19 @@ defmodule Aero do
   ```
   """
   @spec di(number, {number, Unit.area_unit}, {number, Unit.pressure_unit | Unit.velocity_unit}) :: {number, :lbf}
-  def di(cdi, wing_area, dynamic_pressure_or_velocity) when is_number(cdi) do
-    {wing_area_ft2, :ft2} = wing_area ~> :ft2
-    {dynamic_pressure_psf, :psf} = dp_or_v_to_psf(dynamic_pressure_or_velocity)
-    {cdi * wing_area_ft2 * dynamic_pressure_psf, :lbf}
+  def di(cdi, s, q_or_v) when is_number(cdi) do
+    {s_ft2, :ft2} = s ~> :ft2
+    {q_psf, :psf} = q_or_v_to_psf(q_or_v)
+    {cdi * s_ft2 * q_psf, :lbf}
   end
   
   
   # Helper for functions taking dynamic pressure or velocity argument
-  defp dp_or_v_to_psf(dynamic_pressure_or_velocity) do
-    if dimension_of(dynamic_pressure_or_velocity) == :velocity do
-      q(dynamic_pressure_or_velocity) # assume sea level
+  defp q_or_v_to_psf(q_or_v) do
+    if dimension_of(q_or_v) == :velocity do
+      q(q_or_v) # assume sea level
     else
-      dynamic_pressure_or_velocity ~> :psf
+      q_or_v ~> :psf
     end
   end
   
