@@ -125,7 +125,7 @@ defmodule Aero do
   ## Examples
   ```
   iex>Aero.rn {48, :in}, {33, :knots}
-  1396665.5999999999
+  1396665.6
   ```
   """
   @spec rn({number, Unit.length_unit}, {number, Unit.velocity_unit}) :: float
@@ -209,7 +209,7 @@ defmodule Aero do
   iex> Aero.cl {120, :kg}, {16, :mph}, {336, :ft2}
   1.2014239839002203
   iex> Aero.cl {390, :kg}, {33, :knots}, {111, :ft2}
-  2.16318029396999
+  2.1631802939699885
   ```
   """
   @spec cl({number, Unit.mass_unit}, {number, Unit.pressure_unit | Unit.velocity_unit}, {number, Unit.area_unit}) :: float
@@ -511,6 +511,60 @@ defmodule Aero do
   ###############################
   
   
+  @prop_efficiency_numerator 0.85
+  @prop_efficiency_default 0.775
+  @thrust_cruise 0.75
+  @thrust_cruise_vw 0.9
+  @thrust_climb 0.9
+  @thrust_climb_vw 0.95
+  @thrust_hp_denominator 375
+  
+  
+  @doc """
+  Propeller efficiency `n` (dimensionless) estimate with no parameters or
+  based on total drag `Dt`, propeller diameter `d`, and dynamic pressure
+  `Q` or velocity `V`.
+  
+  See ELDH p6 [20]
+  
+  ## Examples
+  ```
+  iex> Aero.n
+  0.775
+  iex> Aero.n {20, :lbf}, {3, :ft}, Aero.q({90, :knots})
+  0.7845419104274584
+  iex> Aero.n {20, :lbf}, {3, :ft}, {90, :knots}
+  0.7845419104274584
+  ```
+  """
+  @spec n() :: float
+  @spec n({number, Unit.force_unit}, {number, Unit.length_unit}, {number, Unit.pressure_unit | Unit.velocity_unit}) :: number
+  def n(), do: @prop_efficiency_default
+  def n(dt, d, q_or_v) do
+    {dt_lbf, :lbf} = dt ~> :lbf
+    {d_ft, :ft} = d ~> :ft
+    {q_psf, :psf} = q_or_v_to_psf(q_or_v)
+    @prop_efficiency_numerator / (1 + (dt_lbf / (q_psf * :math.pow(d_ft, 2))))
+  end
+  
+  
+  @doc """
+  Thrust Horsepower `T` required for given drag `D` and velocity `V`
+  
+  See ELDH p6 [21]
+  
+  ## Examples
+  ```
+  iex> Aero.t {33, :lbf}, {100, :mph}
+  {8.8, :hp}
+  ```
+  """
+  @spec t({number, Unit.force_unit}, {number, Unit.velocity_unit}) :: {number, :hp}
+  def t(d, v) do
+    {d_lbf, :lbf} = d ~> :lbf
+    {v_mph, :mph} = v ~> :mph
+    {(d_lbf * v_mph) / @thrust_hp_denominator, :hp}
+  end
   
   
 end
