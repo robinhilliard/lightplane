@@ -315,7 +315,7 @@ defmodule Aero do
   @cf_enclosed_basic_trainer_mono 0.009
   @cf_open_stearman_biplane_exp_radial 0.014
   
-  # Wing efficiency factor
+  # Wing efficiency factor (see note e())
   @e_straight 0.85
   @e_tapered 0.90
   @e_elliptical 1.0
@@ -396,7 +396,9 @@ defmodule Aero do
   - coefficient of friction (cf), wetted surface area (Sw) and q
   - D/q and q
   
-  See ELDH p5 [15-16]
+  Total drag is Dp + Di
+  
+  See ELDH p5 [15-16, 19]
   
   ## Examples
   ```
@@ -438,6 +440,42 @@ defmodule Aero do
   @spec cdi(number, number) :: number
   @spec cdi(number, number, number) :: number
   def cdi(cl, ar, e \\ @e_elliptical), do: :math.pow(cl, 2) / (:math.pi() * e * ar)
+  
+  
+  @doc """
+  Induced drag (Di) based on Cdi, wing area (S) and q or velocity
+  
+  Total drag is Dp + Di.
+  
+  See ELDH p5 [18, 19]
+  
+  ## Examples
+  ```
+  iex> Aero.di Aero.cdi(0.4, 5), {68, :ft2}, {27, :psf}
+  {18.701342433070074, :lbf}
+  iex> Aero.di Aero.cdi(0.4, 5), {68, :ft2}, {104, :mph}
+  {19.178545280577037, :lbf}
+  ```
+  """
+  @spec di(number, {number, Unit.area_unit}, {number, Unit.pressure_unit | Unit.velocity_unit}) :: {number, :lbf}
+  def di(cdi, wing_area, dynamic_pressure_or_velocity) when is_number(cdi) do
+    {wing_area_ft2, :ft2} = wing_area ~> :ft2
+    
+    {dynamic_pressure_psf, :psf} = if dimension_of(dynamic_pressure_or_velocity) == :velocity do
+      q(dynamic_pressure_or_velocity) # assume sea level
+    else
+      dynamic_pressure_or_velocity ~> :psf
+    end
+  
+    {cdi * wing_area_ft2 * dynamic_pressure_psf, :lbf}
+  end
+  
+  
+  ###############################
+  ##  PERFORMANCE ELDH PAGE 6  ##
+  ###############################
+  
+  
   
   
 end
