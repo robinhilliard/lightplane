@@ -2,16 +2,44 @@ defmodule Aero do
   @moduledoc """
   Formulae from Chapter 1 of the Evans Light Plane Designer's Handbook (ELDH).
   Function names and arguments are documented in mixed case to match standard
-  subscripted symbols used in engineering books for readability:
+  subscripted symbols used in engineering books for readability. Here are some
+  examples:
 
   <table>
-    <tr><th>Symbol Name</th><th>Documentation</th><th>Code</th></tr>
-    <tr><td>Reynolds Number</td><td><code class="inline">RN</code></td><td><code class="inline">rn</code></td></tr>
-    <tr><td>coefficient of induced drag</td><td><code class="inline">Cdi</code></td><td><code class="inline">cdi</code></td></tr>
-    <tr><td>max coefficient of lift</td><td><code class="inline">Cl max</code></td><td><code class="inline">cl_max</code></td></tr>
-    <tr><td>wing area</td><td><code class="inline">S</code></td><td><code class="inline">s</code></td></tr>
-    <tr><td>span</td><td><code class="inline">b</code></td><td><code class="inline">b</code></td></tr>
-    <tr><td>drag per Q</td><td><code class="inline">D/q</code></td><td><code class="inline">dq</code></td></tr>
+    <tr>
+      <th>Symbol Name</th>
+      <th>In Documentation</th>
+      <th>In Code</th></tr>
+    <tr>
+      <td>Reynolds Number</td>
+      <td><code class="inline">RN</code></td>
+      <td><code class="inline">rn</code></td>
+    </tr>
+    <tr>
+      <td>coefficient of induced drag</td>
+      <td><code class="inline">Cdi</code></td>
+      <td><code class="inline">cdi</code></td>
+    </tr>
+    <tr>
+      <td>max coefficient of lift</td>
+      <td><code class="inline">Cl max</code></td>
+      <td><code class="inline">cl_max</code></td>
+    </tr>
+    <tr>
+      <td>wing area</td>
+      <td><code class="inline">S</code></td>
+      <td><code class="inline">s</code></td>
+    </tr>
+    <tr>
+      <td>span</td>
+      <td><code class="inline">b</code></td>
+      <td><code class="inline">b</code></td>
+    </tr>
+    <tr>
+      <td>drag per Q</td>
+      <td><code class="inline">D/q</code></td>
+      <td><code class="inline">dq</code></td>
+    </tr>
   </table>
   """
   
@@ -24,7 +52,7 @@ defmodule Aero do
   ##############################
   
   
-  @sea_level 0
+  @sea_level 0.0
   @q_velocity_coefficient 0.00256
   @est_gross_wt_1_place_coefficient 0.35
   @est_gross_wt_2_place_coefficient 0.40
@@ -100,7 +128,7 @@ defmodule Aero do
   1396665.5999999999
   ```
   """
-  @spec rn({number, Unit.length_unit}, {number, Unit.velocity_unit}) :: number
+  @spec rn({number, Unit.length_unit}, {number, Unit.velocity_unit}) :: float
   def rn(c, v) do
     {c_in, :in} = c ~> :in
     {v_mph, :mph} = v ~> :mph
@@ -119,7 +147,7 @@ defmodule Aero do
   1.2
   ```
   """
-  @spec cl_max_approx(:fabric | :metal | :composite) :: number
+  @spec cl_max_approx(:fabric | :metal | :composite) :: float
   def cl_max_approx(wing_surface_material)
   def cl_max_approx(:fabric), do: @cl_max_approx_fabric
   def cl_max_approx(:metal), do: @cl_max_approx_metal
@@ -184,7 +212,7 @@ defmodule Aero do
   2.16318029396999
   ```
   """
-  @spec cl({number, Unit.mass_unit}, {number, Unit.pressure_unit | Unit.velocity_unit}, {number, Unit.area_unit}) :: number
+  @spec cl({number, Unit.mass_unit}, {number, Unit.pressure_unit | Unit.velocity_unit}, {number, Unit.area_unit}) :: float
   def cl(w, q_or_v, s) do
     {w_lbs, :lbs} = w ~> :lbs
     {s_ft2, :ft2} = s ~> :ft2
@@ -284,7 +312,7 @@ defmodule Aero do
   5.63063063063063
   ```
   """
-  @spec ar({number, Unit.length_unit}, {number, Unit.length_unit | Unit.area_unit}) :: number
+  @spec ar({number, Unit.length_unit}, {number, Unit.length_unit | Unit.area_unit}) :: float
   def ar(b, c_or_s)  do
     {b_ft, :ft} = b ~> :ft
     
@@ -338,7 +366,7 @@ defmodule Aero do
   """
   @typedoc "`Cf` sample aircraft option"
   @type cf_example_ac :: :super_clean_sailplance | :clean_q2_dragonfly | :enclosed_basic_trainer_mono | :open_stearman_biplane_exp_radial
-  @spec cf(cf_example_ac) :: number
+  @spec cf(cf_example_ac) :: float
   def cf(cf_example_ac)
   def cf(:super_clean_sailplane), do: @cf_super_clean_sailplane
   def cf(:clean_q2_dragonfly), do: @cf_clean_q2_dragonfly
@@ -362,7 +390,7 @@ defmodule Aero do
   """
   @typedoc "`e` wing planform option"
   @type e_wing_planform :: :straight | :tapered | :elliptical
-  @spec e(e_wing_planform) :: number
+  @spec e(e_wing_planform) :: float
   def e(e_wing_planform)
   def e(:straight), do: @e_straight
   def e(:tapered), do: @e_tapered
@@ -383,7 +411,7 @@ defmodule Aero do
   """
   @typedoc "`D/q` sample aircraft option"
   @type dq_example_ac :: :ercoupe | :cherokee_180 | :varieze | :lancair_200 | :q2 | :dragonfly
-  @spec dq(dq_example_ac) :: number
+  @spec dq(dq_example_ac) :: float
   def dq(dq_example_ac)
   def dq(:ercoupe), do: @dq_ercoupe
   def dq(:cherokee_180), do: @dq_cherokee_180
@@ -439,8 +467,8 @@ defmodule Aero do
   0.09062469700762041
   ```
   """
-  @spec cdi(number, number) :: number
-  @spec cdi(number, number, number) :: number
+  @spec cdi(number, number) :: float
+  @spec cdi(number, number, number) :: float
   def cdi(cl, ar, e \\ @e_elliptical), do: :math.pow(cl, 2) / (:math.pi() * e * ar)
   
   
@@ -468,6 +496,7 @@ defmodule Aero do
   
   
   # Helper for functions taking dynamic pressure or velocity argument
+  @spec q_or_v_to_psf({number, Unit.pressure_unit | Unit.velocity_unit}) :: {number, :psf}
   defp q_or_v_to_psf(q_or_v) do
     if dimension_of(q_or_v) == :velocity do
       q(q_or_v) # assume sea level

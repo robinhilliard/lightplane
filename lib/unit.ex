@@ -12,11 +12,13 @@ defmodule Unit do
     end
   end
   
-  @type mass_unit :: :kg | :g | :lbs | :slug
+  @type area_unit :: :m2 | :ft2 | :in2
   @type length_unit :: :m | :cm | :mm | :ft | :in
+  @type mass_unit :: :kg | :g | :lbs | :slug
+  @type pressure_unit :: :pa | :kpa | :psi | :psf
   @type time_unit :: :s | :min | :hrs
   @type velocity_unit :: :ms | :mph | :knots | :kph
-  @type unit :: mass_unit | length_unit | time_unit | velocity_unit
+  @type unit :: mass_unit | length_unit | time_unit | velocity_unit | area_unit | pressure_unit
   
   @units %{
     kg:     {:mass,     1.0, "kilograms"},
@@ -145,7 +147,7 @@ defmodule Unit do
   {:error, "metres per second (velocity) cannot be converted to feet (length)"}
   ```
   """
-  @spec to({number, unit}, unit) :: {number, unit}
+  @spec to({number, unit}, unit) :: {float, unit}
   def to({input, from_unit}, to_unit) do
     with {:from, {from_dim, c_from, _}} <- {:from, @units[from_unit]},
          {:to, {to_dim, c_to, _}} <- {:to, @units[to_unit]},
@@ -173,7 +175,7 @@ defmodule Unit do
   {36.0, :kph}
   ```
   """
-  @spec {number, unit} ~> unit :: {number, unit}
+  @spec {float, unit} ~> unit :: {float, unit}
   def a ~> b when is_tuple(a) and is_atom(b), do: to(a, b)
   
   @doc """
@@ -299,10 +301,10 @@ defmodule Unit do
          } do
       {a_val * a_cf * b_val * b_cf, result_unit}
     else
-      {:a_conv_details, nil} -> {:error, "Unknown unit '#{Atom.to_string(a_unit)}' for left operand of *."}
-      {:b_conv_details, nil} -> {:error, "Unknown unit '#{Atom.to_string(b_unit)}' for right operand of *."}
-      {:result_dim, nil} -> {:error, "Could not resolve result dimension when multiplying '#{Atom.to_string(a_unit)}' and '#{Atom.to_string(b_unit)}'."}
-      {:result_unit, nil} -> {:error, "Could not resolve result unit when multiplying '#{Atom.to_string(a_unit)}' and '#{Atom.to_string(b_unit)}'."}
+      {:a_conv_details, _} -> {:error, "Unknown unit '#{Atom.to_string(a_unit)}' for left operand of *."}
+      {:b_conv_details, _} -> {:error, "Unknown unit '#{Atom.to_string(b_unit)}' for right operand of *."}
+      {:result_dim, _} -> {:error, "Could not resolve result dimension when multiplying '#{Atom.to_string(a_unit)}' and '#{Atom.to_string(b_unit)}'."}
+      {:result_unit, _} -> {:error, "Could not resolve result unit when multiplying '#{Atom.to_string(a_unit)}' and '#{Atom.to_string(b_unit)}'."}
     end
   end
   
@@ -344,10 +346,10 @@ defmodule Unit do
          } do
       {(a_val * a_cf) / (b_val * b_cf), result_unit}
     else
-      {:a_conv_details, nil} -> {:error, "Unknown unit '#{Atom.to_string(a_unit)}' for left operand of /."}
-      {:b_conv_details, nil} -> {:error, "Unknown unit '#{Atom.to_string(b_unit)}' for right operand of /."}
-      {:result_dim, nil} -> {:error, "Could not resolve result dimension when dividing '#{Atom.to_string(a_unit)}' by '#{Atom.to_string(b_unit)}'."}
-      {:result_unit, nil} -> {:error, "Could not resolve result unit when dividing '#{Atom.to_string(a_unit)}' by '#{Atom.to_string(b_unit)}'."}
+      {:a_conv_details, _} -> {:error, "Unknown unit '#{Atom.to_string(a_unit)}' for left operand of /."}
+      {:b_conv_details, _} -> {:error, "Unknown unit '#{Atom.to_string(b_unit)}' for right operand of /."}
+      {:result_dim_opts, _} -> {:error, "Could not resolve result dimension when dividing '#{Atom.to_string(a_unit)}' by '#{Atom.to_string(b_unit)}'."}
+      {:result_unit, _} -> {:error, "Could not resolve result unit when dividing '#{Atom.to_string(a_unit)}' by '#{Atom.to_string(b_unit)}'."}
     end
   end
   

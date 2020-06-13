@@ -16,7 +16,7 @@ defmodule Util do
     iex> Util.interpolate 7, [{0, 0}, {5, 50}, {10, 60}]
     54.0
   """
-  @spec interpolate(number, [{number, number}, ...]) :: number
+  @spec interpolate(number, [{number, number}, ...]) :: float
   def interpolate(input, [{input_1, output_1}, {input_2, output_2} | _samples]) when input_1 <= input and input <= input_2 do
     t = (input - input_1) / (input_2 - input_1)
     output_1 + t * (output_2 - output_1)
