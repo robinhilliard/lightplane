@@ -1,7 +1,8 @@
 # Lightplane
 
-Aeronautical engineering library based on Evan's Light Plane Designer's Handbook and other sources.
-Strong emphasis on unit safety and conversions between SI and imperial.
+Aeronautical engineering library based chiefly on the
+[Evan's Light Plane Designer's Handbook](https://books.google.com.au/books/about/Evans_Lightplane_Designer_s_Handbook.html?id=hfPkAAAAMAAJ&redir_esc=y)
+and other sources. Strong emphasis on unit safety and streamlined unit conversion.
 
 ## Installation
 
