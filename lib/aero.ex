@@ -518,6 +518,8 @@ defmodule Aero do
   @thrust_climb 0.9
   @thrust_climb_vw 0.95
   @thrust_hp_denominator 375
+  @level_flight_thp_coefficient 0.00267
+  @rate_of_climb_coefficient 33_000
   
   
   @doc """
@@ -566,5 +568,158 @@ defmodule Aero do
     {(d_lbf * v_mph) / @thrust_hp_denominator, :hp}
   end
   
+  
+  @doc """
+  Max thrust horsepower `Tm` = `n` * brake horsepower `BHP`
+  
+  See ELDH p6 [22]
+  
+  ## Examples
+  ```
+  iex> Aero.tm 0.775, {65, :hp}
+  {50.375, :hp}
+  ```
+  """
+  @spec tm(number, {number, Unit.power_unit}) :: {number, :hp}
+  def tm(n, bhp) do
+    {bhp_hp, :hp} = bhp ~> :hp  # Name confusing, but could be in kW for example
+    {n * bhp_hp, :hp}
+  end
+  
+  
+  @doc """
+  Cruise thrust horsepower `Tc` given `n` and `BHP`
+  
+  See ELDH p6 [23]
+  
+  ## Examples
+  ```
+  iex> Aero.tc 0.775, {65, :hp}
+  {37.78125, :hp}
+  ```
+  """
+  @spec tc(number, {number, Unit.power_unit}) :: {number, :hp}
+  def tc(n, bhp) do
+    {bhp_hp, :hp} = bhp ~> :hp  # Name confusing, but could be in kW for example
+    {@thrust_cruise * n * bhp_hp, :hp}
+  end
+  
+  
+  @doc """
+  Cruise thrust horsepower for VW engine `Tc VW` given `n` and `BHP`
+  As WH Evans is the designer of the Volksplane he probably knows
+  what he's talking about.
+  
+  See ELDH p6 [23]
+  
+  ## Examples
+  ```
+  iex> Aero.tc_vw 0.775, {65, :hp}
+  {45.3375, :hp}
+  ```
+  """
+  @spec tc_vw(number, {number, Unit.power_unit}) :: {number, :hp}
+  def tc_vw(n, bhp) do
+    {bhp_hp, :hp} = bhp ~> :hp  # Name confusing, but could be in kW for example
+    {@thrust_cruise_vw * n * bhp_hp, :hp}
+  end
+  
+  
+  @doc """
+  Climb thrust horsepower `Tcl` given `n` and `BHP`
+  
+  See ELDH p6 [24]
+  
+  ## Examples
+  ```
+  iex> Aero.tcl 0.775, {65, :hp}
+  {45.3375, :hp}
+  ```
+  """
+  @spec tcl(number, {number, Unit.power_unit}) :: {number, :hp}
+  def tcl(n, bhp) do
+    {bhp_hp, :hp} = bhp ~> :hp  # Name confusing, but could be in kW for example
+    {@thrust_climb * n * bhp_hp, :hp}
+  end
+  
+  
+  @doc """
+  Climb thrust horsepower for VW engine `Tcl VW` given `n` and `BHP`
+  As WH Evans is the designer of the Volksplane he probably knows
+  what he's talking about.
+  
+  See ELDH p6 [24]
+  
+  ## Examples
+  ```
+  iex> Aero.tcl_vw 0.775, {65, :hp}
+  {47.856249999999996, :hp}
+  ```
+  """
+  @spec tcl_vw(number, {number, Unit.power_unit}) :: {number, :hp}
+  def tcl_vw(n, bhp) do
+    {bhp_hp, :hp} = bhp ~> :hp  # Name confusing, but could be in kW for example
+    {@thrust_climb_vw * n * bhp_hp, :hp}
+  end
+  
+  
+  @doc """
+  Thrust horsepower required for level flight `Tl` given drag `D`, velocity `V' and
+  propeller efficiency `n`.
+  
+  Excess thrust horsepower `Te` = climb thrust horsepower `Tcl` - level flight thrust horsepower `Tl`
+  
+  See ELDH p6 [25-26]
+  
+  ## Examples
+  ```
+  iex> Aero.tl {33, :lbf}, {100, :mph}, 0.775
+  {11.369032258064516, :hp}
+  ```
+  """
+  @spec tl({number, Unit.force_unit}, {number, Unit.velocity_unit}, number) :: {number, :hp}
+  def tl(d, v, n) do
+    {d_lbf, :lbf} = d ~> :lbf
+    {v_mph, :mph} = v ~> :mph
+    {@level_flight_thp_coefficient * ((d_lbf * v_mph) / n), :hp}
+  end
+  
+  
+  @doc """
+  Rate of climb `RC` given excess thrust horsepower `Te` and gross weight `W`
+  
+  See ELDH p6 [27]
+  
+  ## Examples
+  ```
+  iex> Aero.rc {10, :hp}, {300, :kg}
+  {498.95160699999997, :fpm}
+  ```
+  """
+  @spec rc({number, Unit.power_unit}, {number, Unit.mass_unit}) :: {number, :fpm}
+  def rc(te, w) do
+    {te_hp, :hp} = te ~> :hp
+    {w_lbs, :lbs} = w ~> :lbs
+    {(te_hp * @rate_of_climb_coefficient) / w_lbs, :fpm}
+  end
+  
+  
+  @doc """
+  Excess thrust horsepower `Te` required for Rate of climb `RC` at gross weight `W`
+  
+  See ELDH p6 [28]
+  
+  ## Examples
+  ```
+  iex> Aero.te {500, :fpm}, {300, :kg}
+  {10.021011917494436, :hp}
+  ```
+  """
+  @spec te({number, Unit.velocity_unit}, {number, Unit.mass_unit}) :: {number, :hp}
+  def te(rc, w) do
+    {rc_fpm, :fpm} = rc ~> :fpm
+    {w_lbs, :lbs} = w ~> :lbs
+    {(rc_fpm * w_lbs) / @rate_of_climb_coefficient, :hp}
+  end
   
 end
