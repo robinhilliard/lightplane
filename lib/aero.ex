@@ -253,7 +253,7 @@ defmodule Aero do
   
   
   @doc """
-  Wing loading given gross weight `W` and wing area `S`.
+  Wing loading `W/S` given gross weight `W` and wing area `S`.
   
   See ELDH p4 [13]
   
@@ -347,7 +347,7 @@ defmodule Aero do
   
   
   @doc """
-  Wing efficiency factor `e` (dimensionless). Note that Riblett thinks the NACA
+  Wing efficiency factor `e` (dimensionless). Note that Riblett thought the NACA
   experiment this was based on is crap because it tapered thickness ratios along
   with aspect ratio down to inefficient values around 9%, and the elliptical wing
   was the only one with no thickness taper and a high lift 4412 section.
