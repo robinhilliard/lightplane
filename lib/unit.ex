@@ -79,9 +79,11 @@ defmodule Unit do
   TODO may work better as macro to get higher precedence
   
   ## Example
+  ```
   iex>use Unit
   iex>10 <~ :kph
   {10, :kph}
+  ```
   """
   @spec number <~ unit :: {number, unit}
   def a <~ b when is_number(a) and is_atom(b), do: {a, b}
@@ -91,9 +93,11 @@ defmodule Unit do
   Query the dimension of a unit
   
   ## Examples
+  ```
   iex>use Unit
   iex>dimension_of {10, :kph}
   :velocity
+  ```
   """
   @spec dimension_of({number, unit}) :: dimension
   def dimension_of({value, unit}) when is_number(value) and is_atom(unit) do
@@ -106,9 +110,11 @@ defmodule Unit do
   Human readable description of a unit
   
   ## Examples
+  ```
   iex>use Unit
   iex>describe {10, :kph}
   "kilometres per hour"
+  ```
   """
   @spec describe({number, unit}) :: String.t
   def describe({value, unit}) when is_number(value) and is_atom(unit) do
@@ -122,20 +128,22 @@ defmodule Unit do
   Convert a value in specified units to a compatible second unit or raise a useful error.
   
   ## Examples
-    iex> Unit.to {1.0, :ft}, :in
-    {12.0, :in}
-    iex> Unit.to {1.0, :ms}, :ms
-    {1.0, :ms}
-    iex> Unit.to {10, :ms}, :knots
-    {19.6078431372549, :knots}
-    iex> Unit.to {10, :ms}, :kph
-    {36.0, :kph}
-    iex> Unit.to {10, :ms}, :feet
-    {:error, "Unknown destination unit 'feet'."}
-    iex> Unit.to {10, :mps}, :ft
-    {:error, "Unknown source unit 'mps'."}
-    iex> Unit.to {10, :ms}, :ft
-    {:error, "metres per second (velocity) cannot be converted to feet (length)"}
+  ```
+  iex> Unit.to {1.0, :ft}, :in
+  {12.0, :in}
+  iex> Unit.to {1.0, :ms}, :ms
+  {1.0, :ms}
+  iex> Unit.to {10, :ms}, :knots
+  {19.6078431372549, :knots}
+  iex> Unit.to {10, :ms}, :kph
+  {36.0, :kph}
+  iex> Unit.to {10, :ms}, :feet
+  {:error, "Unknown destination unit 'feet'."}
+  iex> Unit.to {10, :mps}, :ft
+  {:error, "Unknown source unit 'mps'."}
+  iex> Unit.to {10, :ms}, :ft
+  {:error, "metres per second (velocity) cannot be converted to feet (length)"}
+  ```
   """
   @spec to({number, unit}, unit) :: {number, unit}
   def to({input, from_unit}, to_unit) do
@@ -159,9 +167,11 @@ defmodule Unit do
   Operator version of to()
   
   ## Examples
+  ```
   iex> use Unit
   iex> 10 <~ :ms ~> :kph
   {36.0, :kph}
+  ```
   """
   @spec {number, unit} ~> unit :: {number, unit}
   def a ~> b when is_tuple(a) and is_atom(b), do: to(a, b)
@@ -172,11 +182,13 @@ defmodule Unit do
   units of the left operand
   
   ## Examples
-    iex> use Unit
-    iex> {1, :ft} + {2, :ft}
-    {3, :ft}
-    iex> {1, :in} + {1, :ft}
-    {13.0, :in}
+  ```
+  iex> use Unit
+  iex> {1, :ft} + {2, :ft}
+  {3, :ft}
+  iex> {1, :in} + {1, :ft}
+  {13.0, :in}
+  ```
   """
   
   def a + b when is_number(a) and is_number(b), do: Kernel.+(a, b)  # original
@@ -193,11 +205,13 @@ defmodule Unit do
   units of the left operand
   
   ## Examples
-    iex> use Unit
-    iex> {3, :ft} - {1, :ft}
-    {2, :ft}
-    iex> {61, :s} - {1, :min}
-    {1.0, :s}
+  ```
+  iex> use Unit
+  iex> {3, :ft} - {1, :ft}
+  {2, :ft}
+  iex> {61, :s} - {1, :min}
+  {1.0, :s}
+  ```
   """
   def a - b when is_number(a) and is_number(b), do: Kernel.-(a, b)  # original
   def {a, unit} - {b, unit} when is_number(a) and is_number(b) and is_atom(unit), do: {Kernel.-(a, b), unit}  # same unit
@@ -211,11 +225,13 @@ defmodule Unit do
   Override unary plus operator to handle unit qualified values.
   
   ## Examples
+  ```
   iex> use Unit
   iex>+3
   3
   iex>+{3, :mm}
   {3, :mm}
+  ```
   """
   def +a when is_number(a), do: a # original
   def +a when is_tuple(a) do # pattern matching here caused syntax error
@@ -230,11 +246,13 @@ defmodule Unit do
   Override unary minus operator to handle unit qualified values.
   
   ## Examples
+  ```
   iex> use Unit
   iex>-3
   -3
   iex>-{3, :mm}
   {-3, :mm}
+  ```
   """
   def -a when is_number(a), do: Kernel.-(a) # original
   def -a when is_tuple(a) do # pattern matching here caused syntax error
@@ -250,15 +268,17 @@ defmodule Unit do
   When the result is a different dimension it is expressed in the base SI unit.
 
   ## Examples
-    iex> use Unit
-    iex> 5 * 6
-    30
-    iex> 4 * {3, :knots}
-    {12, :knots}
-    iex> {3, :knots} * 4
-    {12, :knots}
-    iex> {1, :m} * {200, :cm}
-    {2.0, :m2}
+  ```
+  iex> use Unit
+  iex> 5 * 6
+  30
+  iex> 4 * {3, :knots}
+  {12, :knots}
+  iex> {3, :knots} * 4
+  {12, :knots}
+  iex> {1, :m} * {200, :cm}
+  {2.0, :m2}
+  ```
   """
   def a * b when is_number(a) and is_number(b), do: Kernel.*(a, b)  # original
   def a * {b, unit} when is_number(a) and is_number(b) and is_atom(unit), do: {Kernel.*(a, b), unit}  # dimensionless coefficient
@@ -292,15 +312,17 @@ defmodule Unit do
   When the result is a different dimension it is expressed in the base SI unit.
 
   ## Examples
-    iex> use Unit
-    iex> 30 / 6
-    5.0
-    iex> 4 / {3, :knots}
-    {1.3333333333333333, :knots}
-    iex> {3, :knots} / 4
-    {0.75, :knots}
-    iex> {2.0, :m2} / {200, :cm}
-    {1.0, :m}
+  ```
+  iex> use Unit
+  iex> 30 / 6
+  5.0
+  iex> 4 / {3, :knots}
+  {1.3333333333333333, :knots}
+  iex> {3, :knots} / 4
+  {0.75, :knots}
+  iex> {2.0, :m2} / {200, :cm}
+  {1.0, :m}
+  ```
   """
   def a / b when is_number(a) and is_number(b), do: Kernel./(a, b)  # original
   def a / {b, unit} when is_number(a) and is_number(b) and is_atom(unit), do: {Kernel./(a, b), unit}  # dimensionless coefficient
