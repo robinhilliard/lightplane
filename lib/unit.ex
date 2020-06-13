@@ -193,6 +193,8 @@ defmodule Unit do
   ```
   """
   
+  @spec number + number :: number
+  @spec {number, unit} + {number, unit} :: {number, unit}
   def a + b when is_number(a) and is_number(b), do: Kernel.+(a, b)  # original
   def {a, unit} + {b, unit} when is_number(a) and is_number(b) and is_atom(unit), do: {Kernel.+(a, b), unit}  # same unit
   def {value_a, unit_of_a} + {value_b, unit_of_b} when is_number(value_a) and is_number(value_b) and is_atom(unit_of_a) and is_atom(unit_of_b) do
@@ -215,6 +217,8 @@ defmodule Unit do
   {1.0, :s}
   ```
   """
+  @spec number - number :: number
+  @spec {number, unit} - {number, unit} :: {number, unit}
   def a - b when is_number(a) and is_number(b), do: Kernel.-(a, b)  # original
   def {a, unit} - {b, unit} when is_number(a) and is_number(b) and is_atom(unit), do: {Kernel.-(a, b), unit}  # same unit
   def {value_a, unit_of_a} - {value_b, unit_of_b} when is_number(value_a) and is_number(value_b) and is_atom(unit_of_a) and is_atom(unit_of_b) do
@@ -235,6 +239,8 @@ defmodule Unit do
   {3, :mm}
   ```
   """
+  @spec +number :: number
+  @spec +tuple :: tuple
   def +a when is_number(a), do: a # original
   def +a when is_tuple(a) do # pattern matching here caused syntax error
     with {value, unit} <- a,
@@ -256,6 +262,8 @@ defmodule Unit do
   {-3, :mm}
   ```
   """
+  @spec -number :: number
+  @spec -tuple :: tuple
   def -a when is_number(a), do: Kernel.-(a) # original
   def -a when is_tuple(a) do # pattern matching here caused syntax error
     with {value, unit} <- a,
@@ -282,6 +290,10 @@ defmodule Unit do
   {2.0, :m2}
   ```
   """
+  @spec number * number :: number
+  @spec number * {number, unit} :: {number, unit}
+  @spec {number, unit} * number :: {number, unit}
+  @spec {number, unit} * {number, unit} :: {number, unit}
   def a * b when is_number(a) and is_number(b), do: Kernel.*(a, b)  # original
   def a * {b, unit} when is_number(a) and is_number(b) and is_atom(unit), do: {Kernel.*(a, b), unit}  # dimensionless coefficient
   def {a, unit} * b when is_number(a) and is_number(b) and is_atom(unit), do: {Kernel.*(a, b), unit}
@@ -326,6 +338,10 @@ defmodule Unit do
   {1.0, :m}
   ```
   """
+  @spec number / number :: float
+  @spec number / {number, unit} :: {float, unit}
+  @spec {number, unit} / number :: {float, unit}
+  @spec {number, unit} / {number, unit} :: {float, unit}
   def a / b when is_number(a) and is_number(b), do: Kernel./(a, b)  # original
   def a / {b, unit} when is_number(a) and is_number(b) and is_atom(unit), do: {Kernel./(a, b), unit}  # dimensionless coefficient
   def {a, unit} / b when is_number(a) and is_number(b) and is_atom(unit), do: {Kernel./(a, b), unit}
