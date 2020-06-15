@@ -14,13 +14,14 @@ defmodule Unit do
   
   @type area_unit :: :m2 | :ft2 | :in2
   @type energy_unit :: :w | :kw | :hp
+  @type force_unit :: :n | :lbf
   @type length_unit :: :m | :cm | :mm | :ft | :in
   @type mass_unit :: :kg | :g | :lbs | :slug
   @type power_unit :: :w | :kw | :hp
   @type pressure_unit :: :pa | :kpa | :psi | :psf
   @type time_unit :: :s | :min | :hrs
   @type velocity_unit :: :ms | :mph | :knots | :kph | :fpm
-  @type unit :: area_unit | energy_unit | length_unit | mass_unit | power_unit | pressure_unit | time_unit | velocity_unit
+  @type unit :: area_unit | energy_unit | force_unit | length_unit | mass_unit | power_unit | pressure_unit | time_unit | velocity_unit
   
   @units %{
     kg:     {:mass,     1.0, "kilograms"},
