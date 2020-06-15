@@ -124,8 +124,10 @@ defmodule Aero do
   
   ## Examples
   ```
-  iex>Aero.rn {48, :in}, {33, :knots}
+  iex> Aero.rn {48, :in}, {33, :knots}
   1396665.6
+  iex> Aero.rn {5, :m}, {33, :knots}
+  5727795.275590554
   ```
   """
   @spec rn({number, Unit.length_unit}, {number, Unit.velocity_unit}) :: float
@@ -540,7 +542,7 @@ defmodule Aero do
   ```
   """
   @spec n() :: float
-  @spec n({number, Unit.force_unit}, {number, Unit.length_unit}, {number, Unit.pressure_unit | Unit.velocity_unit}) :: number
+  @spec n({number, Unit.force_unit}, {number, Unit.length_unit}, {number, Unit.pressure_unit | Unit.velocity_unit}) :: float
   def n(), do: @prop_efficiency_default
   def n(dt, d, q_or_v) do
     {dt_lbf, :lbf} = dt ~> :lbf
